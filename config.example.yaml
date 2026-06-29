@@ -1,0 +1,57 @@
+# llmproxy 配置示例
+# 启动: llmproxy --config config.yaml
+
+# 代理监听地址 (默认 127.0.0.1:8880)
+listen: "127.0.0.1:8880"
+
+# 上游供应商列表
+upstreams:
+  # --- OpenAI Chat 兼容上游（如 DeepSeek, 通义千问等）---
+  - name: deepseek
+    base_url: https://api.deepseek.com
+    api_key: "${DEEPSEEK_API_KEY}"  # 支持环境变量引用
+    type: openai                     # 出站协议: openai, anthropic, gemini
+    models:
+      - deepseek-chat
+      - deepseek-reasoner
+
+  # --- Anthropic 官方 API ---
+  - name: claude-official
+    base_url: https://api.anthropic.com
+    api_key: "${ANTHROPIC_API_KEY}"       # 支持 ANTHROPIC_API_KEY 或 ${ANTHROPIC_AUTH_TOKEN}
+    # type: anthropic 的上游自动检测认证方式：
+    #   sk-ant-... → x-api-key 头
+    #   其他格式   → Authorization: Bearer 头
+    type: anthropic
+    models:
+      - claude-sonnet-4-20250514
+      - claude-opus-4-20250514
+    # 模型映射（入站模型名 → 上游模型名）
+    model_mappings:
+      claude-sonnet-4-20250514: claude-sonnet-4-20250514
+
+  # --- Gemini ---
+  - name: gemini
+    base_url: https://generativelanguage.googleapis.com
+    api_key: "${GEMINI_API_KEY}"
+    type: gemini
+    models:
+      - gemini-2.5-flash
+      - gemini-2.5-pro
+
+# ==========================================================
+# 用法示例
+# ==========================================================
+# Claude Code 使用 DeepSeek:
+#   export ANTHROPIC_BASE_URL=http://127.0.0.1:8880
+#   export ANTHROPIC_API_KEY=not-needed
+#   claude --model deepseek-chat
+#
+# Codex 使用 Claude 官方:
+#   codex --model claude-sonnet-4-20250514
+#   (配置 Codex base_url 指向 http://127.0.0.1:8880)
+#
+# Gemini CLI 使用 Claude:
+#   gemini --model claude-sonnet-4-20250514
+#   (配置 Gemini base_url 指向 http://127.0.0.1:8880)
+# ==========================================================
